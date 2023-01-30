@@ -236,9 +236,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 414979892f649db4ca2ddb3d5d8cad0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  size: 8
+  size: 16
   solveOption: 1
-  frameDelay: 1
+  frameDelay: 0
   queenPrefab: {fileID: 3276547186913849428, guid: 24c28840fc8dfce4e89d0e47215395c2, type: 3}
   squarePrefab: {fileID: 5204685330599550334, guid: 4e658890e915a7b4ba6f1a50481cb64d, type: 3}
   conflictPrefab: {fileID: 4991075855837523019, guid: 99f4f8b8af965f44380a2e22fee50003, type: 3}
