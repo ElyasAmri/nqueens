@@ -48,6 +48,48 @@ namespace NQueens.Code
             return enumeratedQueens;
         }
 
+        // display frame by frame solution of the problem
+        public IEnumerator<Dictionary<(int x, int y), int>> StepSolving()
+        {
+            var c = 0;
+            var random = new Random();
+
+            while (Check())
+            {
+                var conflicts = Range(0, size)
+                    .Select((i, index) => (count: CountConflicts(i, c) - 3, index))
+                    .ToList();
+                var min = conflicts.Min(i => i.count);
+                conflicts.RemoveAll(i => i.count != min);
+                var nextPosition = random.Next(0, conflicts.Count);
+                queens[c] = nextPosition;
+                if (++c == size) c = 0;
+
+                // return a snapshot of the board
+                yield return GetSnapshot();
+            }
+        }
+
+        Dictionary<(int x, int y), int> GetSnapshot()
+        {
+            var snapshot = new Dictionary<(int x, int y), int>();
+
+            for (var i = 0; i < size; i++)
+            {
+                for (var j = 0; j < size; j++)
+                {
+                    snapshot[(i, j)] = CountConflicts(i, j);
+                }
+            }
+
+            foreach (var (x, y) in enumeratedQueens)
+            {
+                snapshot[(x, y)] = -snapshot[(x, y)];
+            }
+
+            return snapshot;
+        }
+
         // check if the board is in a resolved state
         bool Check()
         {
