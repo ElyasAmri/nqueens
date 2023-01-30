@@ -53,8 +53,9 @@ namespace NQueens.Code
         {
             var c = 0;
             var random = new Random();
+            var runs = 0;
 
-            while (Check())
+            do
             {
                 var conflicts = Range(0, size)
                     .Select((i, index) => (count: CountConflicts(i, c) - 3, index))
@@ -67,7 +68,7 @@ namespace NQueens.Code
 
                 // return a snapshot of the board
                 yield return GetSnapshot();
-            }
+            } while (!(Check() && ++runs > size));
         }
 
         Dictionary<(int x, int y), int> GetSnapshot()

@@ -105,6 +105,8 @@ public class MainScript : MonoBehaviour
             PutConflicts(conflicts);
             yield return wait;
         }
+
+        Debug.Log("Done");
     }
 
     void PutConflicts(Dictionary<(int x, int y), int> conflicts)
