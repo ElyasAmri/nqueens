@@ -95,9 +95,9 @@ namespace NQueens.Code
         {
             var eq = enumeratedQueens;
 
-            for (var i = 0; i < size; i++)
+            for (var i = 0; i < enumeratedQueens.Count; i++)
             {
-                for (var j = 0; j < size; j++)
+                for (var j = 0; j < enumeratedQueens.Count; j++)
                 {
                     if (i == j) continue;
 
