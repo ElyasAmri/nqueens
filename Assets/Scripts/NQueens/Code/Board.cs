@@ -7,6 +7,8 @@ namespace NQueens.Code
 {
     public class Board
     {
+        const int MAX_ITERATIONS = 1000;
+        
         readonly int size;
         readonly int?[] queens;
 
@@ -72,7 +74,7 @@ namespace NQueens.Code
                 yield return GetSnapshot();
                 runs++;
 
-                if (++runs > 200)
+                if (++runs > MAX_ITERATIONS)
                     throw new Exception("Unsolvable");
             } while (!Check());
         }
@@ -86,7 +88,7 @@ namespace NQueens.Code
                 snapshot[(i, j)] = CountConflicts(i, j);
 
             foreach (var q in enumeratedQueens)
-                snapshot[q] = -1;
+                snapshot[q] *= -1;
 
             return snapshot;
         }

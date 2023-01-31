@@ -92,16 +92,12 @@ public class MainScript : MonoBehaviour
         while (enumerator.MoveNext())
         {
             var queens = enumerator.Current?
-                .Where(kv => kv.Value == -1)
+                .Where(kv => kv.Value < 0)
                 .Select(kv => kv.Key)
                 .ToList();
 
-            var conflicts = enumerator.Current?
-                .Where(kv => kv.Value > 0)
-                .ToDictionary(p => p.Key, p => p.Value);
-            
             PutQueens(queens);
-            PutConflicts(conflicts);
+            PutConflicts(enumerator.Current);
             yield return wait;
         }
 
@@ -112,7 +108,7 @@ public class MainScript : MonoBehaviour
     {
         foreach (var (k, v) in conflicts)
         {
-            currentConflicts[k].text = v.ToString();
+            currentConflicts[k].text = $"{Math.Abs(v) + (v < 0 ? -1 : 0)}";
         }
     }
 }
