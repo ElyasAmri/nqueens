@@ -25,12 +25,13 @@ namespace NQueens.Code
         {
             var c = 0;
             var random = new Random();
+            var runs = 0;
 
-            while (Check())
+            do
             {
                 // calculate the conflicts in the column
                 var conflicts = Range(0, size)
-                    .Select((i, index) => (count: CountConflicts(i, c) - 3, index))
+                    .Select((i, index) => (count: CountConflicts(i, c), index))
                     .ToList();
 
                 // select the smallest conflicts
@@ -39,11 +40,12 @@ namespace NQueens.Code
 
                 // randomly assigns the next position for the queen
                 var nextPosition = random.Next(0, conflicts.Count);
-                queens[c] = nextPosition;
+                queens[c] = conflicts[nextPosition].index;
 
                 // cycles the next c
                 if (++c == size) c = 0;
-            }
+                runs++;
+            } while (!Check() && runs < 50);
 
             return enumeratedQueens;
         }
@@ -58,17 +60,21 @@ namespace NQueens.Code
             do
             {
                 var conflicts = Range(0, size)
-                    .Select((i, index) => (count: CountConflicts(i, c) - 3, index))
+                    .Select((i, index) => (count: CountConflicts(i, c), index))
                     .ToList();
                 var min = conflicts.Min(i => i.count);
                 conflicts.RemoveAll(i => i.count != min);
                 var nextPosition = random.Next(0, conflicts.Count);
-                queens[c] = nextPosition;
+                queens[c] = conflicts[nextPosition].index;
                 if (++c == size) c = 0;
 
                 // return a snapshot of the board
                 yield return GetSnapshot();
-            } while (!(Check() && ++runs > size));
+                runs++;
+
+                if (++runs > 200)
+                    throw new Exception("Unsolvable");
+            } while (!Check());
         }
 
         Dictionary<(int x, int y), int> GetSnapshot()
@@ -76,17 +82,11 @@ namespace NQueens.Code
             var snapshot = new Dictionary<(int x, int y), int>();
 
             for (var i = 0; i < size; i++)
-            {
-                for (var j = 0; j < size; j++)
-                {
-                    snapshot[(i, j)] = CountConflicts(i, j);
-                }
-            }
+            for (var j = 0; j < size; j++)
+                snapshot[(i, j)] = CountConflicts(i, j);
 
-            foreach (var (x, y) in enumeratedQueens)
-            {
-                snapshot[(x, y)] = -snapshot[(x, y)];
-            }
+            foreach (var q in enumeratedQueens)
+                snapshot[q] = -1;
 
             return snapshot;
         }
@@ -102,15 +102,18 @@ namespace NQueens.Code
                 {
                     if (i == j) continue;
 
-                    if (eq[i].x == eq[j].x ||
-                        eq[i].y == eq[j].y ||
-                        Math.Abs(eq[i].x - eq[i].y) == Math.Abs(eq[j].x - eq[j].y)
+                    var q1 = eq[i];
+                    var q2 = eq[j];
+
+                    if (q1.x == q2.x ||
+                        q1.y == q2.y ||
+                        q1.x - q1.y == q2.x - q2.y || q1.x + q1.y == q2.x + q2.y
                        )
                         return false;
                 }
             }
 
-            return true;
+            return enumeratedQueens.Count == size;
         }
 
         // count conflicts for a cell
@@ -118,13 +121,14 @@ namespace NQueens.Code
         int CountConflicts(int r, int c)
         {
             var eq = enumeratedQueens;
+            var include = eq.Remove((r, c));
 
             // conflicts of row, column, and diagonal
             var rc = eq.Count(q => q.x == r);
             var cc = eq.Count(q => q.y == c);
-            var dc = eq.Count(q => Math.Abs(q.x - q.y) == 0);
+            var dc = eq.Count(q => q.x - q.y == r - c || q.x + q.y == r + c);
 
-            return rc + cc + dc;
+            return rc + cc + dc + (include ? 1 : 0);
         }
     }
 }

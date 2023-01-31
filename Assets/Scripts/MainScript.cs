@@ -11,6 +11,7 @@ public class MainScript : MonoBehaviour
     [SerializeField] int size = 8;
     [SerializeField] SolveOption solveOption = SolveOption.Auto;
     [SerializeField] float frameDelay = 0;
+    [SerializeField] KeyCode stepKey = KeyCode.Space;
 
     [SerializeField] GameObject queenPrefab;
     [SerializeField] GameObject squarePrefab;
@@ -20,7 +21,7 @@ public class MainScript : MonoBehaviour
     float sizeFactor = 1;
     Vector3 offsetFactor = Vector3.zero;
     List<GameObject> currentQueens = new();
-    Dictionary<(int, int), GameObject> currentConflicts = new();
+    Dictionary<(int, int), TextMeshProUGUI> currentConflicts = new();
     Transform squaresParent;
     Transform conflictsParent;
     Transform queensParent;
@@ -39,13 +40,15 @@ public class MainScript : MonoBehaviour
         squaresParent.SetParent(transform);
         queensParent = new GameObject("Queens").transform;
         queensParent.SetParent(transform);
-        conflictsParent = new GameObject("Queens").transform;
+        conflictsParent = new GameObject("Conflicts Counts").transform;
         conflictsParent.SetParent(transform);
 
         for (int i = 0; i < size; i++)
         for (int j = 0; j < size; j++)
+        {
             currentConflicts[(i, j)] = Instantiate(conflictPrefab, new Vector3(i, j) * sizeFactor + offsetFactor,
-                Quaternion.identity, conflictsParent);
+                Quaternion.identity, conflictsParent).GetComponentInChildren<TextMeshProUGUI>();
+        }
     }
 
     void GenerateField()
@@ -58,20 +61,14 @@ public class MainScript : MonoBehaviour
     void Solve()
     {
         board = new Board(size);
-        switch (solveOption)
+        if (solveOption == SolveOption.Auto)
         {
-            case SolveOption.Auto:
-                var solution = board.Solve();
-                PutQueens(solution);
-                break;
-            case SolveOption.StepByStep:
-                StartCoroutine(FrameSolver());
-                break;
-            case SolveOption.WaitForInput:
-                // TODO: implement this
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
+            var solution = board.Solve();
+            PutQueens(solution);
+        }
+        else
+        {
+            StartCoroutine(FrameSolver());
         }
     }
 
@@ -89,15 +86,17 @@ public class MainScript : MonoBehaviour
     IEnumerator FrameSolver()
     {
         var enumerator = board.StepSolving();
-        var wait = new WaitForSeconds(frameDelay);
+        object wait = solveOption == SolveOption.StepByStep 
+            ? new WaitForSeconds(frameDelay) 
+            : new WaitUntil(() => Input.GetKeyDown(stepKey));
         while (enumerator.MoveNext())
         {
-            var queens = enumerator.Current
-                .Where(kv => kv.Value < 0)
+            var queens = enumerator.Current?
+                .Where(kv => kv.Value == -1)
                 .Select(kv => kv.Key)
                 .ToList();
 
-            var conflicts = enumerator.Current
+            var conflicts = enumerator.Current?
                 .Where(kv => kv.Value > 0)
                 .ToDictionary(p => p.Key, p => p.Value);
             
@@ -113,7 +112,7 @@ public class MainScript : MonoBehaviour
     {
         foreach (var (k, v) in conflicts)
         {
-            currentConflicts[k].GetComponentInChildren<TextMeshProUGUI>().text = v.ToString();
+            currentConflicts[k].text = v.ToString();
         }
     }
 }
