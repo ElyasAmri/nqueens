@@ -56,17 +56,25 @@ namespace NQueens.Code
         {
             do
             {
-                Iteration();
-
-                // return a snapshot of the board
-                yield return GetSnapshot();
+                if (Iteration())
+                {
+                    // return a snapshot of the board
+                    yield return GetSnapshot();                    
+                }
             } while (!Check());
 
             Debug.Log($"Took {runs} iterations");
         }
 
-        void Iteration()
+        bool Iteration()
         {
+            var q = queens[currentColumn];
+            if (q.HasValue && conflictsCounter[q.Value, currentColumn] == 1)
+            {
+                if (++currentColumn == size) currentColumn = 0;
+                return false;
+            }
+            
             // calculate the conflicts in the column
             var conflicts = row
                 .Select((i, index) => (count: conflictsCounter[i, currentColumn], index))
@@ -83,6 +91,7 @@ namespace NQueens.Code
             // cycle the column
             if (++currentColumn == size) currentColumn = 0;
             ++runs;
+            return true;
         }
 
         Dictionary<(int x, int y), int> GetSnapshot()

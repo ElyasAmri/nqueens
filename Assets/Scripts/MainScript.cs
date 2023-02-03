@@ -109,7 +109,6 @@ public class MainScript : MonoBehaviour
             PutQueens(queens);
             PutConflicts(enumerator.Current);
             yield return wait;
-            yield return null;
         }
 
         Debug.Log("Done");
