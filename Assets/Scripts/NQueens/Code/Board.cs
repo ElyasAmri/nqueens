@@ -9,7 +9,7 @@ namespace NQueens.Code
 {
     public class Board
     {
-        const int MAX_ITERATIONS = 1000;
+        const int MAX_ITERATIONS = 100000;
 
         readonly int size;
         readonly int?[] queens;

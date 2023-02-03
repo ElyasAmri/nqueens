@@ -236,7 +236,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 414979892f649db4ca2ddb3d5d8cad0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  size: 8
+  size: 1000
   solveOption: 1
   frameDelay: 0
   stepKey: 32
