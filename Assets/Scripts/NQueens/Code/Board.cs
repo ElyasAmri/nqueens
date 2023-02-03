@@ -79,7 +79,7 @@ namespace NQueens.Code
             // randomly assigns the next position for the queen
             var nextPosition = random.Next(0, conflicts.Count);
             MoveQueen(currentColumn, conflicts[nextPosition].index);
-            
+
             // cycle the column
             if (++currentColumn == size) currentColumn = 0;
             ++runs;
@@ -104,24 +104,15 @@ namespace NQueens.Code
         {
             var eq = enumeratedQueens;
 
-            for (var i = 0; i < enumeratedQueens.Count; i++)
+            if (eq.Count != size) return false; 
+
+            foreach (var (x, y) in eq)
             {
-                for (var j = 0; j < enumeratedQueens.Count; j++)
-                {
-                    if (i == j) continue;
-
-                    var q1 = eq[i];
-                    var q2 = eq[j];
-
-                    if (q1.x == q2.x ||
-                        q1.y == q2.y ||
-                        q1.x - q1.y == q2.x - q2.y || q1.x + q1.y == q2.x + q2.y
-                       )
-                        return false;
-                }
+                if (conflictsCounter[x, y] != 1)
+                    return false;
             }
 
-            return enumeratedQueens.Count == size;
+            return true;
         }
 
         void MoveQueen(int c, int newR)
