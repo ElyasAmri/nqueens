@@ -46,7 +46,7 @@ public class MainScript : MonoBehaviour
         for (int i = 0; i < size; i++)
         for (int j = 0; j < size; j++)
         {
-            currentConflicts[(i, j)] = Instantiate(conflictPrefab, new Vector3(i, j) * sizeFactor + offsetFactor,
+            currentConflicts[(i, j)] = Instantiate(conflictPrefab, new Vector3(j, i) * sizeFactor + offsetFactor,
                 Quaternion.identity, conflictsParent).GetComponentInChildren<TextMeshProUGUI>();
         }
     }
@@ -76,7 +76,7 @@ public class MainScript : MonoBehaviour
     {
         currentQueens.ForEach(Destroy);
 
-        foreach (var (x, y) in queens)
+        foreach (var (y, x) in queens)
         {
             var q = Instantiate(queenPrefab, new Vector3(x, y) * sizeFactor + offsetFactor, Quaternion.identity, queensParent);
             currentQueens.Add(q);
@@ -99,6 +99,7 @@ public class MainScript : MonoBehaviour
             PutQueens(queens);
             PutConflicts(enumerator.Current);
             yield return wait;
+            yield return null;
         }
 
         Debug.Log("Done");
@@ -108,7 +109,7 @@ public class MainScript : MonoBehaviour
     {
         foreach (var (k, v) in conflicts)
         {
-            currentConflicts[k].text = $"{Math.Abs(v) + (v < 0 ? -1 : 0)}";
+            currentConflicts[k].text = $"{(v > 0 ? v : -v - 1)}";
         }
     }
 }

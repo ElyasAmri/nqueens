@@ -1,16 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using static System.Linq.Enumerable;
+using Random = System.Random;
 
 namespace NQueens.Code
 {
     public class Board
     {
         const int MAX_ITERATIONS = 1000;
-        
+
         readonly int size;
         readonly int?[] queens;
+        readonly int[,] conflictsCounter;
 
         List<(int x, int y)> enumeratedQueens => queens
             .Where(i => i.HasValue)
@@ -21,6 +24,10 @@ namespace NQueens.Code
         {
             this.size = size;
             queens = new int?[size];
+            conflictsCounter = new int[size, size];
+            for (var i = 0; i < size; i++)
+            for (var j = 0; j < size; j++)
+                conflictsCounter[i, j] = 1;
         }
 
         public List<(int, int)> Solve()
@@ -33,7 +40,7 @@ namespace NQueens.Code
             {
                 // calculate the conflicts in the column
                 var conflicts = Range(0, size)
-                    .Select((i, index) => (count: CountConflicts(i, c), index))
+                    .Select((i, index) => (count: conflictsCounter[i, c], index))
                     .ToList();
 
                 // select the smallest conflicts
@@ -46,8 +53,12 @@ namespace NQueens.Code
 
                 // cycles the next c
                 if (++c == size) c = 0;
-                runs++;
-            } while (!Check() && runs < 50);
+
+                if (++runs > MAX_ITERATIONS)
+                    throw new Exception("Unsolvable");
+            } while (!Check());
+
+            Debug.Log($"Took {runs} iterations");
 
             return enumeratedQueens;
         }
@@ -62,21 +73,20 @@ namespace NQueens.Code
             do
             {
                 var conflicts = Range(0, size)
-                    .Select((i, index) => (count: CountConflicts(i, c), index))
+                    .Select((i, index) => (count: conflictsCounter[i, c], index))
                     .ToList();
                 var min = conflicts.Min(i => i.count);
                 conflicts.RemoveAll(i => i.count != min);
                 var nextPosition = random.Next(0, conflicts.Count);
-                queens[c] = conflicts[nextPosition].index;
+                MoveQueen(c, conflicts[nextPosition].index);
                 if (++c == size) c = 0;
 
                 // return a snapshot of the board
                 yield return GetSnapshot();
                 runs++;
-
-                if (++runs > MAX_ITERATIONS)
-                    throw new Exception("Unsolvable");
             } while (!Check());
+
+            Debug.Log($"Took {runs} iterations");
         }
 
         Dictionary<(int x, int y), int> GetSnapshot()
@@ -85,7 +95,7 @@ namespace NQueens.Code
 
             for (var i = 0; i < size; i++)
             for (var j = 0; j < size; j++)
-                snapshot[(i, j)] = CountConflicts(i, j);
+                snapshot[(i, j)] = conflictsCounter[i, j];
 
             foreach (var q in enumeratedQueens)
                 snapshot[q] *= -1;
@@ -118,19 +128,80 @@ namespace NQueens.Code
             return enumeratedQueens.Count == size;
         }
 
-        // count conflicts for a cell
-        // TODO: improve this mechanic
-        int CountConflicts(int r, int c)
+        void MoveQueen(int c, int newR)
         {
-            var eq = enumeratedQueens;
-            var include = eq.Remove((r, c));
+            if (!queens[c].HasValue) goto skipSubtraction;
+            var r = queens[c].Value;
+            if (r == newR) return;
 
-            // conflicts of row, column, and diagonal
-            var rc = eq.Count(q => q.x == r);
-            var cc = eq.Count(q => q.y == c);
-            var dc = eq.Count(q => q.x - q.y == r - c || q.x + q.y == r + c);
+            // decrement the old row
+            ShiftRow(r, -1);
+            // decrement the positive diagonals we are moving from
+            ShiftPositiveDiagonal(r, c, -1);
+            ShiftNegativeDiagonal(r, c, -1);
+            // offset the overlap
+            conflictsCounter[r, c] += 3;
 
-            return rc + cc + dc + (include ? 1 : 0);
+            skipSubtraction:
+
+            // increment the new row
+            ShiftRow(newR, 1);
+            // increment the diagonals we are moving to
+            ShiftPositiveDiagonal(newR, c, 1);
+            ShiftNegativeDiagonal(newR, c, 1);
+            // offset the overlap
+            conflictsCounter[newR, c] -= 3;
+
+            queens[c] = newR;
+        }
+
+        void ShiftRow(int r, int v)
+        {
+            for (var i = 0; i < size; i++)
+            {
+                conflictsCounter[r, i] += v;
+            }
+        }
+
+        void ShiftPositiveDiagonal(int r, int c, int v)
+        {
+            var o = r - c;
+            switch (o)
+            {
+                case 0:
+                    for (var i = 0; i < size; i++)
+                        conflictsCounter[i, i] += v;
+                    break;
+                case > 0:
+                    for (var i = 0; i < size - o; i++)
+                        conflictsCounter[i + o, i] += v;
+                    break;
+                case < 0:
+                    for (var i = 0; i < size + o; i++)
+                        conflictsCounter[i, i - o] += v;
+                    break;
+            }
+        }
+
+        void ShiftNegativeDiagonal(int r, int c, int v)
+        {
+            var asize = size - 1;
+            var o = r - (asize - c);
+            switch (o)
+            {
+                case 0:
+                    for (var i = 0; i < size; i++)
+                        conflictsCounter[i, asize - i] += v;
+                    break;
+                case > 0:
+                    for (var i = 0; i < size - o; i++)
+                        conflictsCounter[i + o, asize - i] += v;
+                    break;
+                case < 0:
+                    for (var i = 0; i < size + o; i++)
+                        conflictsCounter[i, asize - (i - o)] += v;
+                    break;
+            }
         }
     }
 }
