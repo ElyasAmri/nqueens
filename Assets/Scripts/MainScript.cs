@@ -1,10 +1,11 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 using NQueens.Code;
 using TMPro;
+using Debug = UnityEngine.Debug;
 
 public class MainScript : MonoBehaviour
 {
@@ -29,8 +30,11 @@ public class MainScript : MonoBehaviour
 
     void Start()
     {
-        Setup();
-        GenerateField();
+        if (solveOption != SolveOption.AutoNoVisual)
+        {
+            Setup();
+            GenerateField();
+        }
         Solve();
     }
 
@@ -61,10 +65,16 @@ public class MainScript : MonoBehaviour
     void Solve()
     {
         board = new Board(size);
-        if (solveOption == SolveOption.Auto)
+        if (solveOption is SolveOption.Auto or SolveOption.AutoNoVisual)
         {
+            var sw = Stopwatch.StartNew();
             var solution = board.Solve();
-            PutQueens(solution);
+            sw.Stop();
+            if (solveOption is SolveOption.Auto)
+            {
+                PutQueens(solution);
+            }
+            Debug.Log($"Took {sw.ElapsedMilliseconds}ms");
         }
         else
         {
@@ -117,6 +127,7 @@ public class MainScript : MonoBehaviour
 public enum SolveOption
 {
     Auto,
+    AutoNoVisual,
     StepByStep,
     WaitForInput,
 }
