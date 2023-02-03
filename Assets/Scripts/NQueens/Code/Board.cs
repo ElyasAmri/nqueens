@@ -14,6 +14,11 @@ namespace NQueens.Code
         readonly int size;
         readonly int?[] queens;
         readonly int[,] conflictsCounter;
+        readonly int[] row;
+
+        int currentColumn;
+        int runs;
+        readonly Random random = new();
 
         List<(int x, int y)> enumeratedQueens => queens
             .Where(i => i.HasValue)
@@ -28,33 +33,16 @@ namespace NQueens.Code
             for (var i = 0; i < size; i++)
             for (var j = 0; j < size; j++)
                 conflictsCounter[i, j] = 1;
+            row = Range(0, size).ToArray();
         }
 
         public List<(int, int)> Solve()
         {
-            var c = 0;
-            var random = new Random();
-            var runs = 0;
-
             do
             {
-                // calculate the conflicts in the column
-                var conflicts = Range(0, size)
-                    .Select((i, index) => (count: conflictsCounter[i, c], index))
-                    .ToList();
+                Iteration();
 
-                // select the smallest conflicts
-                var min = conflicts.Min(i => i.count);
-                conflicts.RemoveAll(i => i.count != min);
-
-                // randomly assigns the next position for the queen
-                var nextPosition = random.Next(0, conflicts.Count);
-                queens[c] = conflicts[nextPosition].index;
-
-                // cycles the next c
-                if (++c == size) c = 0;
-
-                if (++runs > MAX_ITERATIONS)
+                if (runs > MAX_ITERATIONS)
                     throw new Exception("Unsolvable");
             } while (!Check());
 
@@ -66,27 +54,35 @@ namespace NQueens.Code
         // display frame by frame solution of the problem
         public IEnumerator<Dictionary<(int x, int y), int>> StepSolving()
         {
-            var c = 0;
-            var random = new Random();
-            var runs = 0;
-
             do
             {
-                var conflicts = Range(0, size)
-                    .Select((i, index) => (count: conflictsCounter[i, c], index))
-                    .ToList();
-                var min = conflicts.Min(i => i.count);
-                conflicts.RemoveAll(i => i.count != min);
-                var nextPosition = random.Next(0, conflicts.Count);
-                MoveQueen(c, conflicts[nextPosition].index);
-                if (++c == size) c = 0;
+                Iteration();
 
                 // return a snapshot of the board
                 yield return GetSnapshot();
-                runs++;
             } while (!Check());
 
             Debug.Log($"Took {runs} iterations");
+        }
+
+        void Iteration()
+        {
+            // calculate the conflicts in the column
+            var conflicts = row
+                .Select((i, index) => (count: conflictsCounter[i, currentColumn], index))
+                .ToList();
+
+            // select the smallest conflicts
+            var min = conflicts.Min(i => i.count);
+            conflicts.RemoveAll(i => i.count != min);
+
+            // randomly assigns the next position for the queen
+            var nextPosition = random.Next(0, conflicts.Count);
+            MoveQueen(currentColumn, conflicts[nextPosition].index);
+            
+            // cycle the column
+            if (++currentColumn == size) currentColumn = 0;
+            ++runs;
         }
 
         Dictionary<(int x, int y), int> GetSnapshot()
